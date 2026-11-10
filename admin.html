@@ -657,7 +657,7 @@
             renderAll();
           }
           saved = JSON.stringify(data);
-          setStatus("ok", demo ? "Сохранено в демо — на сайте не изменится" : "Сохранено. Сайт обновится в течение минуты");
+          setStatus("ok", demo ? "Сохранено в демо — на сайте не изменится" : API_URL.includes("script.google") ? "Сохранено. Сайт обновится в течение минуты" : "Сохранено, на сайте уже новые данные");
         } catch (err) {
           setStatus("error", err.message === "Failed to fetch" ? "Нет связи. Изменения не сохранены — попробуйте ещё раз." : err.message);
         } finally {

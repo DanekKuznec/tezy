@@ -1,0 +1,4 @@
+# backups/ and service files are not for visitors
+<FilesMatch "^(data\.json\.(lock|tmp)|config\.php)$">
+  Require all denied
+</FilesMatch>
