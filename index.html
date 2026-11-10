@@ -737,7 +737,7 @@
           <p class="eyebrow">Тренеры</p>
           <h2>Кто будет вести занятия</h2>
         </div>
-        <div class="coaches">
+        <div class="coaches" id="coaches">
           <article class="coach" data-reveal>
             <div class="coach__avatar" aria-hidden="true">АВ</div>
             <div class="coach__body">
@@ -764,7 +764,7 @@
           <p class="eyebrow">Цены</p>
           <h2>Абонементы</h2>
         </div>
-        <ul class="prices">
+        <ul class="prices" id="prices-list">
           <li class="price" data-reveal>
             <h3>Пробное</h3>
             <p class="price__sum">0 <span>₽</span></p>
@@ -960,6 +960,17 @@
         }
       ];
 
+      let PASSES = [
+        { name: "Пробное", price: "0", note: "Первое занятие в любой группе. Нужна спортивная одежда и вода.", main: false },
+        { name: "Месяц", price: "от 3 200", note: "Все занятия своей группы за календарный месяц. Цена зависит от группы.", main: true },
+        { name: "Разовое", price: "600", note: "Если ходите нерегулярно или пропустили часть месяца.", main: false }
+      ];
+
+      let COACHES = [
+        { name: "Андрей Викторович", rank: "3 дан · старший тренер", text: "Ведёт подростков и взрослых. Готовит к соревнованиям, но на турнир никого не тащит: выступать или нет, решает спортсмен." },
+        { name: "Екатерина Сергеевна", rank: "1 дан · детский тренер", text: "Ведёт малышей и детей. Половина занятия — игры на координацию, вторая половина — техника. Родители могут смотреть первое занятие из зала." }
+      ];
+
       const DAYS = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"];
       const DAYS_SHORT = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"];
 
@@ -1112,7 +1123,46 @@
           ));
         }
         watchReveal(list.querySelectorAll("[data-reveal]"));
-        $("#month-price").firstChild.textContent = `от ${formatPrice(Math.min(...GROUPS.map((g) => g.price)))} `;
+      }
+
+      /* ---------- passes and coaches ---------- */
+      function priceText(value) {
+        const v = String(value ?? "").trim();
+        // "3200" -> "3 200", "от 3200" -> "от 3 200"; any other wording is shown as typed
+        return v.replace(/\d[\d\s]*/g, (n) => formatPrice(Number(n.replace(/\s/g, ""))) + (n.endsWith(" ") ? " " : ""));
+      }
+
+      function renderPasses() {
+        const list = $("#prices-list");
+        list.replaceChildren();
+        PASSES.forEach((pass, i) => {
+          const sum = el("p", { class: "price__sum" }, `${priceText(pass.price)} `);
+          if (/\d/.test(pass.price)) sum.append(el("span", { text: "₽" }));
+          list.append(el("li", { class: "price" + (pass.main ? " price--main" : ""), "data-reveal": "", style: `--i: ${i}` },
+            el("h3", { text: pass.name }), sum, el("p", { class: "price__note", text: pass.note || "" })
+          ));
+        });
+        watchReveal(list.querySelectorAll("[data-reveal]"));
+      }
+
+      function initials(name) {
+        return String(name).split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join("");
+      }
+
+      function renderCoaches() {
+        const box = $("#coaches");
+        box.replaceChildren();
+        COACHES.forEach((c, i) => {
+          box.append(el("article", { class: "coach", "data-reveal": "", style: `--i: ${i}` },
+            el("div", { class: "coach__avatar", "aria-hidden": "true", text: initials(c.name) }),
+            el("div", { class: "coach__body" },
+              el("h3", { text: c.name }),
+              c.rank ? el("p", { class: "coach__rank", text: c.rank }) : "",
+              el("p", { class: "coach__text", text: c.text || "" })
+            )
+          ));
+        });
+        watchReveal(box.querySelectorAll("[data-reveal]"));
       }
 
       /* ---------- belts ---------- */
@@ -1711,8 +1761,7 @@
           const row = rows.find(([key]) => key.toLowerCase().startsWith(label));
           return row && row[1] ? row[1] : null;
         };
-        const single = get("разовое"), discount = get("скидка"), phone = get("телефон"), address = get("адрес"), hours = get("часы");
-        if (single && Number.isFinite(toNumber(single))) $("#single-price").firstChild.textContent = `${formatPrice(toNumber(single))} `;
+        const discount = get("скидка"), phone = get("телефон"), address = get("адрес"), hours = get("часы");
         if (discount && Number.isFinite(toNumber(discount))) $("#discount").textContent = String(toNumber(discount));
         if (address) $("#club-address").textContent = address;
         if (hours) $("#club-hours").textContent = hours;
@@ -1742,7 +1791,10 @@
         const res = await fetch(API_URL, { cache: "no-store" });
         const json = await res.json();
         if (!json.ok) throw new Error(json.error || "API error");
-        const { groups = [], schedule = [], settings = {} } = json.data;
+        const { groups = [], schedule = [], settings = {}, passes, coaches } = json.data;
+        // these two are optional: an older script or an empty sheet keeps the built-in ones
+        if (Array.isArray(passes) && passes.length) { PASSES = passes; renderPasses(); }
+        if (Array.isArray(coaches) && coaches.length) { COACHES = coaches; renderCoaches(); }
         return [
           groups.map((g) => [g.name, g.from, g.to ?? "", g.price, g.length, g.text]),
           schedule.map((x) => [x.group, x.day, x.time]),
@@ -1829,6 +1881,8 @@
       /* ---------- start ---------- */
       renderMatch();
       renderGroups();
+      renderPasses();
+      renderCoaches();
       renderBelts();
       renderFilters();
       renderWeek();

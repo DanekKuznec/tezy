@@ -7,14 +7,21 @@
  *   3. Развернуть → Новое развертывание → тип «Веб-приложение»,
  *      «Выполнять как: я», «Доступ: все» → Развернуть, разрешить доступ.
  *   4. Скопировать адрес веб-приложения (…/exec) и вписать его в API_URL на сайте и в админке.
+ *
+ * Обновление кода: вставить новый текст → Сохранить → Развернуть → Управление развертываниями →
+ * карандаш → Версия: «Новая версия» → Развернуть. Адрес …/exec при этом не меняется.
+ * Листов «Абонементы» и «Тренеры» может не быть — скрипт создаст их сам при первом сохранении.
  */
 
 const PASSWORD = 'смените-этот-пароль';
 
-const SHEET = { groups: 'Группы', schedule: 'Расписание', settings: 'Настройки' };
+const SHEET = { groups: 'Группы', schedule: 'Расписание', settings: 'Настройки', passes: 'Абонементы', coaches: 'Тренеры' };
+const HEADERS = {
+  [SHEET.passes]: ['Название', 'Цена, ₽', 'Пояснение', 'Выделить (да / пусто)'],
+  [SHEET.coaches]: ['Имя', 'Пояс, должность', 'О тренере'],
+};
 const DAYS = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
 const SETTINGS = [
-  ['single', 'Разовое занятие, ₽'],
   ['discount', 'Скидка второму ребёнку, %'],
   ['phone', 'Телефон'],
   ['address', 'Адрес'],
@@ -82,7 +89,21 @@ function readAll() {
     if (found) settings[found[0]] = String(value);
   });
 
-  return { groups, schedule, settings };
+  // empty lists mean "not set up yet": the site then keeps its built-in cards
+  const passes = rows(SHEET.passes).map(([name, price, note, main]) => ({
+    name: String(name).trim(),
+    price: String(price).trim(),
+    note: String(note || ''),
+    main: String(main).trim().toLowerCase() === 'да',
+  })).filter((p) => p.name);
+
+  const coaches = rows(SHEET.coaches).map(([name, rank, text]) => ({
+    name: String(name).trim(),
+    rank: String(rank || '').trim(),
+    text: String(text || ''),
+  })).filter((c) => c.name);
+
+  return { groups, schedule, settings, passes, coaches };
 }
 
 function writeAll(data) {
@@ -102,6 +123,17 @@ function writeAll(data) {
   const scheduleSheet = ss.getSheetByName(SHEET.schedule);
   replaceRows(scheduleSheet, schedule.map((s) => [String(s.group).trim(), s.day, s.time]), 3, true);
 
+  if (Array.isArray(data.passes)) {
+    replaceRows(sheetFor(ss, SHEET.passes), data.passes.filter((p) => p && String(p.name || '').trim()).map((p) => [
+      String(p.name).trim(), String(p.price || '').trim(), String(p.note || ''), p.main ? 'да' : '',
+    ]), 4, true);
+  }
+  if (Array.isArray(data.coaches)) {
+    replaceRows(sheetFor(ss, SHEET.coaches), data.coaches.filter((c) => c && String(c.name || '').trim()).map((c) => [
+      String(c.name).trim(), String(c.rank || '').trim(), String(c.text || ''),
+    ]), 3, true);
+  }
+
   const settingsSheet = ss.getSheetByName(SHEET.settings);
   const values = settingsSheet.getRange(1, 1, Math.max(settingsSheet.getLastRow(), 1), 2).getValues();
   SETTINGS.forEach(([key, title]) => {
@@ -110,6 +142,18 @@ function writeAll(data) {
     if (i >= 0) settingsSheet.getRange(i + 1, 2).setValue(String(data.settings[key]));
     else settingsSheet.appendRow([title, String(data.settings[key])]);
   });
+}
+
+function sheetFor(ss, name) {
+  let sheet = ss.getSheetByName(name);
+  if (sheet) return sheet;
+  sheet = ss.insertSheet(name);
+  const head = HEADERS[name];
+  sheet.getRange(1, 1, 1, head.length).setValues([head]).setFontWeight('bold');
+  sheet.setFrozenRows(1);
+  sheet.setColumnWidth(1, 200);
+  sheet.setColumnWidth(3, 420);
+  return sheet;
 }
 
 function replaceRows(sheet, rows, width, asText) {
