@@ -1460,6 +1460,13 @@
         ["року", "ろく"], ["сити", "しち"], ["хати", "はち"], ["ку", "く"], ["дзю", "じゅう"]
       ];
 
+      function setFlip(card, open) {
+        const w = card._word;
+        card.setAttribute("aria-pressed", String(open));
+        card.setAttribute("aria-label", open ? `${w.term} — ${w.meaning}. ${w.text}` : `${w.term}: показать перевод`);
+        card.querySelector(".flip__back").setAttribute("aria-hidden", String(!open));
+      }
+
       function setupDictionary() {
         const list = $("#dict");
         WORDS.forEach((w, i) => {
@@ -1477,10 +1484,11 @@
           );
           card.addEventListener("click", () => {
             const open = card.getAttribute("aria-pressed") !== "true";
-            card.setAttribute("aria-pressed", String(open));
-            card.setAttribute("aria-label", open ? `${w.term} — ${w.meaning}. ${w.text}` : `${w.term}: показать перевод`);
-            card.querySelector(".flip__back").setAttribute("aria-hidden", String(!open));
+            // one word at a time: the previously opened card turns back
+            if (open) list.querySelectorAll('.flip[aria-pressed="true"]').forEach((other) => setFlip(other, false));
+            setFlip(card, open);
           });
+          card._word = w;
           list.append(el("li", { "data-reveal": "", style: `--i: ${i}` }, card));
         });
 
