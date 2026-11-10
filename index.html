@@ -777,11 +777,11 @@
           </li>
           <li class="price" data-reveal>
             <h3>Разовое</h3>
-            <p class="price__sum">600 <span>₽</span></p>
+            <p class="price__sum" id="single-price">600 <span>₽</span></p>
             <p class="price__note">Если ходите нерегулярно или пропустили часть месяца.</p>
           </li>
         </ul>
-        <p class="prices-foot">Второй ребёнок из семьи — скидка 15% на абонемент. Пропуски по болезни со справкой переносим на следующий месяц.</p>
+        <p class="prices-foot">Второй ребёнок из семьи — скидка <span id="discount">15</span>% на абонемент. Пропуски по болезни со справкой переносим на следующий месяц.</p>
       </div>
     </section>
 
@@ -830,9 +830,9 @@
             <li><div><strong>Приходите на занятие</strong>Лучше за 10 минут до начала, чтобы переодеться.</div></li>
           </ol>
           <div class="contacts">
-            <p>ул. Спортивная, 5, вход со двора, 2 этаж</p>
-            <p><a href="tel:+79000001234">+7 (900) 000-12-34</a></p>
-            <p>Пн–Сб, 10:00–21:00</p>
+            <p id="club-address">ул. Спортивная, 5, вход со двора, 2 этаж</p>
+            <p><a id="club-phone" href="tel:+79000001234">+7 (900) 000-12-34</a></p>
+            <p id="club-hours">Пн–Сб, 10:00–21:00</p>
           </div>
           <div class="trial__msgr">
             <p class="contacts">Удобнее в мессенджере? Бот клуба запишет на пробное, покажет расписание и напомнит о тренировке.</p>
@@ -935,7 +935,8 @@
       const $ = (s, root = document) => root.querySelector(s);
       const TZ = "Europe/Moscow";
 
-      const GROUPS = [
+      // Built-in data. If a Google Sheet is connected (SHEET_ID below), it replaces these on load.
+      let GROUPS = [
         {
           id: "kids", name: "Малыши", from: 5, to: 7, color: "var(--g-kids)", price: 3200, length: 45,
           text: "Игры на координацию, растяжка, первые стойки и удары. Учимся слушать тренера и работать в команде.",
@@ -1002,8 +1003,12 @@
       const state = { age: 8, filter: "all", belt: 0, slot: null };
 
       function groupFor(age) {
-        if (age < 5) return null;
+        if (age < minAge()) return null;
         return GROUPS.find((g) => age >= g.from && age <= g.to) || GROUPS[GROUPS.length - 1];
+      }
+
+      function minAge() {
+        return Math.min(...GROUPS.map((g) => g.from));
       }
 
       function formatPrice(n) {
@@ -1058,7 +1063,7 @@
           box.style.setProperty("--match", "var(--c-line)");
           box.append(
             el("p", { class: "match__group", text: "Чуть подождать" }),
-            el("p", { class: "match__text", text: "Набираем с 5 лет: раньше детям трудно держать внимание целое занятие. Приходите через год — а пока можно посмотреть занятие малышей вместе с ребёнком." })
+            el("p", { class: "match__text", text: `Набираем с ${minAge()} лет: раньше детям трудно держать внимание целое занятие. Приходите чуть позже — а пока можно посмотреть занятие младшей группы вместе с ребёнком.` })
           );
           return;
         }
@@ -1095,6 +1100,7 @@
       /* ---------- group cards ---------- */
       function renderGroups() {
         const list = $("#groups-list");
+        list.replaceChildren();
         for (const g of GROUPS) {
           list.append(el("li", { class: "group", style: `--g: ${g.color}; --i: ${list.children.length}`, "data-reveal": "" },
             el("h3", { text: g.name }),
@@ -1104,6 +1110,7 @@
             el("p", { class: "group__price" }, `${formatPrice(g.price)} ₽ `, el("span", { text: "в месяц" }))
           ));
         }
+        watchReveal(list.querySelectorAll("[data-reveal]"));
         $("#month-price").firstChild.textContent = `от ${formatPrice(Math.min(...GROUPS.map((g) => g.price)))} `;
       }
 
@@ -1173,6 +1180,8 @@
 
       function renderFilters() {
         const box = $("#filters");
+        box.replaceChildren();
+        if (!GROUPS.some((g) => g.id === state.filter)) state.filter = "all";
         const items = [{ id: "all", name: "Все группы" }, ...GROUPS];
         for (const g of items) {
           const chip = el("button", { class: "chip", type: "button", "data-filter": g.id, "aria-pressed": String(g.id === state.filter) });
@@ -1180,6 +1189,8 @@
           chip.append(g.name);
           box.append(chip);
         }
+        if (box.dataset.ready) return;
+        box.dataset.ready = "1";
         box.addEventListener("click", (e) => {
           const chip = e.target.closest("[data-filter]");
           if (chip) setFilter(chip.dataset.filter);
@@ -1232,6 +1243,7 @@
       const groupSelect = $("#f-group");
 
       function fillGroupSelect() {
+        groupSelect.replaceChildren();
         for (const g of GROUPS) {
           groupSelect.append(el("option", { value: g.id, text: `${g.name}, ${g.to >= 99 ? g.from + "+" : g.from + "–" + g.to} лет` }));
         }
@@ -1277,7 +1289,9 @@
         state.slot = null;
         $("#slot-error").textContent = "";
 
-        upcoming(group).forEach((s, i) => {
+        const slots = upcoming(group);
+        if (!slots.length) box.append(el("p", { class: "field__hint", text: "Расписание этой группы уточняйте по телефону — тренер подберёт время." }));
+        slots.forEach((s, i) => {
           const id = `slot-${i}`;
           const input = el("input", { type: "radio", name: "slot", id, value: s.start.toISOString() });
           input.addEventListener("change", () => { state.slot = s; $("#slot-error").textContent = ""; });
@@ -1336,7 +1350,7 @@
         const digits = phone.value.replace(/\D/g, "");
 
         const checks = [
-          setError(null, $("#slot-error"), state.slot ? "" : "Выберите тренировку"),
+          setError(null, $("#slot-error"), state.slot || !$("#slots input") ? "" : "Выберите тренировку"),
           setError(name, $("#name-error"), name.value.trim().length >= 2 ? "" : "Как к вам обращаться?"),
           setError(phone, $("#phone-error"), digits.length === 11 ? "" : "Нужен номер целиком: +7 и 10 цифр"),
           setError(null, $("#consent-error"), $("#f-consent").checked ? "" : "Без согласия не сможем записать")
@@ -1348,7 +1362,9 @@
         }
 
         const group = GROUPS.find((g) => g.id === groupSelect.value);
-        $("#done-summary").textContent = `${group.name}: ${dayLabel(state.slot.start).toLowerCase()}, ${state.slot.time}–${endTime(state.slot.time, group.length)}`;
+        $("#done-summary").textContent = state.slot
+          ? `${group.name}: ${dayLabel(state.slot.start).toLowerCase()}, ${state.slot.time}–${endTime(state.slot.time, group.length)}`
+          : `${group.name}: время тренер согласует по телефону`;
         form.hidden = true;
         $("#done").hidden = false;
         $("#done").focus();
@@ -1615,7 +1631,134 @@
         requestAnimationFrame(frame);
       }
 
+      /* ---------- Google Sheet as the admin panel ---------- */
+      // The club edits groups, schedule and prices in a Google Sheet ("Anyone with the link can view").
+      // Paste the sheet id here; empty = the built-in data above is used.
+      const SHEET_ID = "";
+      const GROUP_COLORS = ["var(--g-kids)", "var(--g-junior)", "var(--g-teen)", "var(--g-adult)", "#7a4fc9", "#1f8a8a", "#b8641d"];
+      const DAY_INDEX = { пн: 0, вт: 1, ср: 2, чт: 3, пт: 4, сб: 5, по: 0, вто: 1, сре: 2, чет: 3, пят: 4, суб: 5 };
+
+      // RFC 4180-ish: quoted fields, doubled quotes, commas and line breaks inside quotes.
+      function parseCsv(text) {
+        const rows = [];
+        let row = [], cell = "", quoted = false;
+        for (let i = 0; i < text.length; i++) {
+          const ch = text[i];
+          if (quoted) {
+            if (ch === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+            else if (ch === '"') quoted = false;
+            else cell += ch;
+          } else if (ch === '"') quoted = true;
+          else if (ch === ",") { row.push(cell); cell = ""; }
+          else if (ch === "\n" || ch === "\r") {
+            if (ch === "\r" && text[i + 1] === "\n") i++;
+            row.push(cell); rows.push(row); row = []; cell = "";
+          } else cell += ch;
+        }
+        if (cell || row.length) { row.push(cell); rows.push(row); }
+        return rows.map((r) => r.map((c) => c.trim())).filter((r) => r.some(Boolean));
+      }
+
+      async function loadSheet(name) {
+        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`;
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error(`${name}: HTTP ${res.status}`);
+        const [, ...rows] = parseCsv(await res.text()); // first row is the header
+        return rows;
+      }
+
+      const toNumber = (v) => Number(String(v).replace(/\s|₽|%/g, "").replace(",", "."));
+      const toTime = (v) => {
+        const m = String(v).match(/(\d{1,2})[:.](\d{2})/);
+        return m ? `${m[1].padStart(2, "0")}:${m[2]}` : null;
+      };
+      const toDay = (v) => {
+        const key = String(v).toLowerCase().replace(/[^а-яё]/g, "");
+        return DAY_INDEX[key.slice(0, 3)] ?? DAY_INDEX[key.slice(0, 2)] ?? null;
+      };
+
+      function groupsFromSheet(groupRows, scheduleRows) {
+        const groups = [];
+        groupRows.forEach(([name, from, to, price, length, text]) => {
+          const g = {
+            id: `g${groups.length}`,
+            name,
+            from: toNumber(from),
+            to: to ? toNumber(to) : 99, // empty "до" means "and older"
+            price: toNumber(price),
+            length: toNumber(length) || 60,
+            text: text || "",
+            color: GROUP_COLORS[groups.length % GROUP_COLORS.length],
+            sessions: []
+          };
+          if (name && Number.isFinite(g.from) && Number.isFinite(g.to) && Number.isFinite(g.price)) groups.push(g);
+        });
+        const byName = new Map(groups.map((g) => [g.name.toLowerCase(), g]));
+        scheduleRows.forEach(([name, day, time]) => {
+          const g = byName.get(String(name).toLowerCase());
+          const d = toDay(day), t = toTime(time);
+          if (g && d !== null && t) g.sessions.push([d, t]);
+        });
+        groups.forEach((g) => g.sessions.sort((a, b) => a[0] - b[0] || a[1].localeCompare(b[1])));
+        return groups.sort((a, b) => a.from - b.from);
+      }
+
+      function applySettings(rows) {
+        const get = (label) => {
+          const row = rows.find(([key]) => key.toLowerCase().startsWith(label));
+          return row && row[1] ? row[1] : null;
+        };
+        const single = get("разовое"), discount = get("скидка"), phone = get("телефон"), address = get("адрес"), hours = get("часы");
+        if (single && Number.isFinite(toNumber(single))) $("#single-price").firstChild.textContent = `${formatPrice(toNumber(single))} `;
+        if (discount && Number.isFinite(toNumber(discount))) $("#discount").textContent = String(toNumber(discount));
+        if (address) $("#club-address").textContent = address;
+        if (hours) $("#club-hours").textContent = hours;
+        if (phone) {
+          const link = $("#club-phone");
+          link.textContent = phone;
+          link.href = `tel:+${phone.replace(/\D/g, "").replace(/^8/, "7")}`;
+        }
+      }
+
+      function rerenderGroups() {
+        // the slider starts one year below the youngest group, so "too early" can still be shown
+        const slider = $("#age");
+        slider.min = String(Math.max(1, minAge() - 1));
+        if (Number(slider.value) < Number(slider.min)) { slider.value = slider.min; state.age = Number(slider.min); }
+        state.matchKey = undefined;
+        renderMatch();
+        renderGroups();
+        renderFilters();
+        renderWeek();
+        fillGroupSelect();
+        renderSlots();
+      }
+
+      async function connectSheet() {
+        if (!SHEET_ID) return;
+        try {
+          const [groupRows, scheduleRows, settingsRows] = await Promise.all([
+            loadSheet("Группы"), loadSheet("Расписание"), loadSheet("Настройки").catch(() => [])
+          ]);
+          const groups = groupsFromSheet(groupRows, scheduleRows);
+          if (!groups.length) throw new Error("в таблице нет ни одной заполненной группы");
+          GROUPS = groups;
+          rerenderGroups();
+          applySettings(settingsRows);
+        } catch (err) {
+          // The site keeps working on the built-in data; the reason is only for whoever opens the console.
+          console.warn("Google Таблица не подключилась, показаны встроенные данные:", err.message);
+        }
+      }
+
       /* ---------- motion ---------- */
+      let revealer = null;
+      // Cards rebuilt after the sheet arrives join the same scroll animation (or just show up).
+      function watchReveal(nodes) {
+        if (revealer) nodes.forEach((n) => revealer.observe(n));
+        else if (calm || !("IntersectionObserver" in window)) nodes.forEach((n) => n.classList.add("is-in"));
+      }
+
       function setupReveal() {
         const items = document.querySelectorAll("[data-reveal]");
         // siblings appear one after another
@@ -1628,14 +1771,14 @@
           items.forEach((node) => node.classList.add("is-in"));
           return;
         }
-        const io = new IntersectionObserver((entries) => {
+        revealer = new IntersectionObserver((entries) => {
           for (const entry of entries) {
             if (!entry.isIntersecting) continue;
             entry.target.classList.add("is-in");
-            io.unobserve(entry.target);
+            revealer.unobserve(entry.target);
           }
         }, { rootMargin: "0px 0px -8% 0px", threshold: 0.12 });
-        items.forEach((node) => io.observe(node));
+        items.forEach((node) => revealer.observe(node));
       }
 
       function setupHeader() {
@@ -1680,6 +1823,7 @@
       setupReveal();
       setupHeader();
       drawEnso();
+      connectSheet();
     })();
   </script>
 </body>
