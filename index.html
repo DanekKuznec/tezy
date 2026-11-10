@@ -170,6 +170,11 @@
     .enso__kanji path { fill: var(--c-night-ink); }
     .enso__kanji { opacity: 0; transform-origin: 200px 200px; animation: stamp 0.7s cubic-bezier(.2,.8,.2,1) 1.35s forwards; }
     @keyframes brush { to { stroke-dashoffset: 0; } }
+    /* when the script draws the ring, it moves the brush and the mask itself */
+    .enso__brush { opacity: 0; pointer-events: none; }
+    .enso.is-brushing .enso__reveal { animation: none; }
+    .enso.is-brushing .enso__kanji { animation-delay: 2.05s; }
+    .enso__brush-body { filter: drop-shadow(4px 6px 5px rgba(0, 0, 0, 0.45)); }
     @keyframes stamp {
       from { opacity: 0; transform: scale(1.18); filter: blur(6px); }
       to { opacity: 1; transform: scale(1); filter: blur(0); }
@@ -603,6 +608,17 @@
             <g class="enso__kanji">
               <path transform="translate(140 78) scale(0.12)" d="M122 611 130 639H427V904H37L45 932H940C954 932 965 927 968 916C922 872 843 807 843 807L773 904H577V639H876C891 639 902 634 905 623C859 579 779 512 779 512L709 611ZM154 88C161 154 122 211 84 233C48 251 22 284 36 327C52 372 104 387 145 362C186 338 215 280 203 198H300C291 363 228 488 34 572L37 582C322 531 448 403 471 198H541V398C541 488 562 512 673 512H761C920 512 966 488 966 433C966 406 958 389 922 374L918 276H909C887 325 870 358 859 371C851 380 844 382 831 383C819 383 799 383 780 383H713C691 383 688 379 688 367V198H778C767 240 749 294 733 331L739 336C804 312 889 267 939 230C961 229 971 226 979 216L850 95L773 170H577V66C602 62 608 53 609 41L427 27V170H197C191 144 181 117 166 87Z"/>
               <path transform="translate(140 198) scale(0.12)" d="M730 26C588 93 307 169 79 204L81 217C191 220 310 217 425 210V368H72L80 396H425V580H23L31 608H425V790C425 802 418 810 402 810C368 810 203 801 203 801V813C280 825 308 842 333 864C359 887 368 924 372 975C554 964 584 895 584 795V608H952C967 608 979 603 982 592C927 547 838 482 838 482L759 580H584V396H917C932 396 944 391 947 380C894 336 806 272 806 272L729 368H584V197C664 189 737 178 799 166C838 181 864 178 876 168Z"/>
+            </g>
+            <g class="enso__brush" id="enso-brush">
+              <g class="enso__brush-body" transform="scale(1.45)">
+                <path d="M-4.6 -48 L4.6 -48 L4 -150 Q0 -156 -4 -150 Z" fill="#c9a46a"/>
+                <path d="M-4.6 -48 L-1.6 -48 L-1.4 -150 Q-3 -153 -4 -150 Z" fill="#a8844c"/>
+                <path d="M-4.4 -86 L4.4 -86 M-4.2 -120 L4.2 -120" stroke="#8a6a3a" stroke-width="2.2"/>
+                <rect x="-7" y="-50" width="14" height="13" rx="2" fill="#1d1612"/>
+                <rect x="-7" y="-46" width="14" height="2.2" fill="#c9a46a" opacity=".55"/>
+                <path d="M0 0 C -3.5 -6 -8.5 -18 -7.5 -37 L 7.5 -37 C 8.5 -18 3.5 -6 0 0 Z" fill="#efe6d6"/>
+                <path d="M0 0 C -2.8 -5 -6.6 -12 -6.6 -19 L 6.6 -19 C 6.6 -12 2.8 -5 0 0 Z" fill="#c2361f"/>
+              </g>
             </g>
           </svg>
         </div>
@@ -1557,6 +1573,48 @@
         toast(`Это демо. На сайте клуба здесь откроется бот клуба в ${where}: запись на пробное, расписание и напоминания.`);
       });
 
+      /* ---------- hero: the brush draws the ring ---------- */
+      function drawEnso() {
+        const enso = $(".enso");
+        const reveal = $(".enso__reveal");
+        const brush = $("#enso-brush");
+        if (calm || !enso || !reveal.getTotalLength) return;
+
+        enso.classList.add("is-brushing");
+        const length = reveal.getTotalLength();
+        const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+        const DELAY = 250, DRAW = 1500, LIFT = 450;
+        let start = null;
+
+        // the brush tip sits on the stroke; the handle leans a little and sways with the movement
+        function place(p, lift = 0) {
+          const pt = reveal.getPointAtLength(p * length);
+          const tilt = 24 + 10 * Math.sin(p * Math.PI * 2);
+          brush.setAttribute("transform", `translate(${pt.x + lift * 60} ${pt.y - lift * 90}) rotate(${tilt + lift * 10})`);
+        }
+
+        function frame(now) {
+          if (start === null) start = now;
+          const t = now - start - DELAY;
+          if (t < 0) { requestAnimationFrame(frame); return; }
+
+          if (t <= DRAW) {
+            const p = ease(t / DRAW);
+            reveal.style.strokeDashoffset = String(1 - p);
+            brush.style.opacity = String(Math.min(1, t / 120));
+            place(p);
+          } else {
+            reveal.style.strokeDashoffset = "0";
+            const l = Math.min(1, (t - DRAW) / LIFT);
+            brush.style.opacity = String(1 - l);
+            place(1, l * l);
+            if (l >= 1) return;
+          }
+          requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
+      }
+
       /* ---------- motion ---------- */
       function setupReveal() {
         const items = document.querySelectorAll("[data-reveal]");
@@ -1621,6 +1679,7 @@
       setupClip();
       setupReveal();
       setupHeader();
+      drawEnso();
     })();
   </script>
 </body>
