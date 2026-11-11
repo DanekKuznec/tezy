@@ -16,7 +16,12 @@
 
 ## Устройство
 
-Один файл `index.html`: HTML, CSS и JavaScript без фреймворков и сборки. Группы, расписание и цены лежат в массивах `GROUPS`, `PASSES` и `COACHES` в начале скрипта — это запасные данные. Чтобы включить админку, скрипт из `admin/apps-script.gs` разворачивают в таблице как веб-приложение и вписывают его адрес в `API_URL` в `index.html` и `admin.html`.
+HTML, CSS и JavaScript без фреймворков и сборки:
+
+- `index.html` — разметка лендинга, `css/style.css` — стили, `js/main.js` — логика;
+- `admin.html`, `css/admin.css`, `js/admin.js` — админка.
+
+Группы, расписание и цены лежат в массивах `GROUPS`, `PASSES` и `COACHES` в начале `js/main.js` — это запасные данные. Чтобы включить админку, скрипт из `admin/apps-script.gs` разворачивают в таблице как веб-приложение и вписывают его адрес в `API_URL` в `js/main.js` и `js/admin.js`.
 
 Фото и видео взяты с [Pexels](https://www.pexels.com/).
 
