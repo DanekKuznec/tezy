@@ -59,7 +59,6 @@
   };
   const color = (name) => `var(--g-${Math.max(0, data.groups.findIndex((g) => g.name === name)) % 7})`;
 
-  /* ---------- API ---------- */
   // text/plain keeps the request "simple", so Apps Script answers without a CORS preflight.
   async function post(body) {
     const res = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) });
@@ -81,7 +80,6 @@
     return json.data;
   }
 
-  /* ---------- login ---------- */
   if (demo) $("#demo-note").hidden = false;
   try { password = sessionStorage.getItem("tetsu-pass") || ""; } catch (e) { /* ignore */ }
   if (password) start();
@@ -159,7 +157,6 @@
     location.reload();
   });
 
-  /* ---------- tabs ---------- */
   const tabs = [...document.querySelectorAll(".tab")];
   tabs.forEach((tab, i) => {
     tab.addEventListener("click", () => selectTab(tab));
@@ -190,7 +187,6 @@
     no.focus();
   }
 
-  /* ---------- groups ---------- */
   function field(labelText, input) {
     const id = "f" + Math.random().toString(36).slice(2, 9);
     input.id = id;
@@ -267,7 +263,6 @@
     input.select();
   });
 
-  /* ---------- schedule ---------- */
   // A plain list instead of <input type="time">: looks the same everywhere, no AM/PM surprises.
   function timeOptions(current) {
     const list = [];
@@ -314,7 +309,6 @@
     }
   }
 
-  /* ---------- passes ---------- */
   function renderPasses() {
     const box = $("#passes");
     box.replaceChildren();
@@ -346,7 +340,6 @@
     focusLast("#passes");
   });
 
-  /* ---------- coaches ---------- */
   function renderCoaches() {
     const box = $("#coaches");
     box.replaceChildren();
@@ -382,7 +375,6 @@
     input.select();
   }
 
-  /* ---------- settings ---------- */
   function renderSettings() {
     document.querySelectorAll("[data-setting]").forEach((input) => {
       input.value = data.settings[input.dataset.setting] ?? "";
@@ -398,7 +390,6 @@
     renderSettings();
   }
 
-  /* ---------- saving ---------- */
   const isDirty = () => JSON.stringify(data) !== saved;
   function setStatus(kind, text) {
     const status = $("#status");

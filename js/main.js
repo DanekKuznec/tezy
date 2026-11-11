@@ -123,7 +123,6 @@
     if (!calm && node.animate) node.animate(keyframes, { duration: 380, easing: "cubic-bezier(.2,.8,.2,1)", fill: "backwards", ...options });
   }
 
-  /* ---------- picker ---------- */
   function renderMatch() {
     const age = state.age;
     $("#age-out").replaceChildren(String(age), el("small", { text: plural(age, "год", "года", "лет") }));
@@ -177,7 +176,6 @@
     if (link.dataset.filter) setFilter(link.dataset.filter);
   });
 
-  /* ---------- group cards ---------- */
   function renderGroups() {
     const list = $("#groups-list");
     list.replaceChildren();
@@ -193,7 +191,6 @@
     watchReveal(list.querySelectorAll("[data-reveal]"));
   }
 
-  /* ---------- passes and coaches ---------- */
   function priceText(value) {
     const v = String(value ?? "").trim();
     // "3200" -> "3 200", "от 3200" -> "от 3 200"; any other wording is shown as typed
@@ -233,7 +230,6 @@
     watchReveal(box.querySelectorAll("[data-reveal]"));
   }
 
-  /* ---------- belts ---------- */
   function beltStrip(belt) {
     const strip = el("div", { class: "belt" + (belt.white ? " belt--white" : ""), style: `--belt: ${belt.color}` });
     if (belt.stripes) {
@@ -283,7 +279,6 @@
     state.beltShown = true;
   }
 
-  /* ---------- schedule ---------- */
   function moscowNow() {
     const parts = new Intl.DateTimeFormat("en-CA", {
       timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false
@@ -357,7 +352,6 @@
     });
   }
 
-  /* ---------- trial form ---------- */
   const form = $("#trial-form");
   const groupSelect = $("#f-group");
 
@@ -500,7 +494,6 @@
     $("#f-name").focus();
   });
 
-  /* ---------- gym: video + gallery ---------- */
   const PHOTOS = [
     { src: "media/gym-1", alt: "Тренер показывает технику, дети смотрят" },
     { src: "media/gym-2", alt: "Начало занятия: группа слушает тренера" },
@@ -595,7 +588,6 @@
     });
   }
 
-  /* ---------- dictionary ---------- */
   const WORDS = [
     { jp: "押忍", term: "Осу", meaning: "Приветствие", text: "Говорят при входе в зал, в ответ тренеру и вместо «понял». Главное слово кёкусинкай." },
     { jp: "道場", term: "Додзё", meaning: "Зал", text: "Место тренировок. Входя и выходя, делают поклон." },
@@ -680,7 +672,6 @@
     });
   }
 
-  /* ---------- demo phone ---------- */
   // The number is made up: instead of a call that goes nowhere, explain what a real site would do.
   let toastTimer;
   function toast(text) {
@@ -708,7 +699,6 @@
     toast(`Это демо. На сайте клуба здесь откроется бот клуба в ${where}: запись на пробное, расписание и напоминания.`);
   });
 
-  /* ---------- hero: the brush draws the ring ---------- */
   function drawEnso() {
     const enso = $(".enso");
     const reveal = $(".enso__reveal");
@@ -750,7 +740,6 @@
     requestAnimationFrame(frame);
   }
 
-  /* ---------- Google Sheet as the admin panel ---------- */
   // The club edits groups, schedule and prices in a Google Sheet ("Anyone with the link can view").
   // Paste the sheet id here; empty = the built-in data above is used.
   const SHEET_ID = "";
@@ -888,7 +877,6 @@
     }
   }
 
-  /* ---------- motion ---------- */
   let revealer = null;
   // Cards rebuilt after the sheet arrives join the same scroll animation (or just show up).
   function watchReveal(nodes) {
@@ -946,7 +934,6 @@
     links.forEach((_, id) => { const section = document.getElementById(id); if (section) spy.observe(section); });
   }
 
-  /* ---------- start ---------- */
   renderMatch();
   renderGroups();
   renderPasses();
