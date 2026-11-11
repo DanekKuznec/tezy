@@ -103,6 +103,8 @@
 
     .section { padding-block: var(--space-24); }
     .section__head { display: grid; gap: var(--space-4); max-width: 44rem; margin-bottom: var(--space-12); }
+    .section--flush { padding-top: 0; }
+    .section__head--flush { margin-bottom: 0; }
     .section__lead { color: var(--c-muted); font-size: var(--fs-m); }
 
     .btn {
@@ -116,6 +118,7 @@
     .btn--red { background: var(--c-red); color: var(--c-red-ink); }
     .btn--red:hover { background: #a82c18; }
     .btn--ghost { border-color: currentColor; background: transparent; }
+    .btn--ink { color: var(--c-ink); }
     .btn--ghost:hover { background: rgba(244, 240, 232, 0.1); }
     .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
 
@@ -126,14 +129,15 @@
       backdrop-filter: blur(10px);
       color: var(--c-night-ink);
       border-bottom: 1px solid rgba(244, 240, 232, 0.08);
+      transition: box-shadow 0.3s;
     }
     .header__row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-6); min-height: 4.25rem; }
     .logo { display: flex; align-items: center; gap: var(--space-3); text-decoration: none; }
-    .logo__mark { width: 2.25rem; height: 2.25rem; }
+    .logo__mark { flex: none; width: 2.25rem; height: 2.25rem; }
     .logo__name { font-family: var(--f-display); font-size: 1.375rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; line-height: 1; }
     .logo__name small { display: block; font-family: var(--f-body); font-size: 0.6875rem; letter-spacing: 0.08em; color: var(--c-night-muted); font-weight: 600; margin-top: 3px; }
     .nav { display: flex; gap: var(--space-6); font-size: var(--fs-s); font-weight: 600; }
-    .nav a { text-decoration: none; color: var(--c-night-muted); transition: color 0.2s; }
+    .nav a { position: relative; text-decoration: none; color: var(--c-night-muted); transition: color 0.2s; }
     .nav a:hover { color: var(--c-night-ink); }
     .header .btn { min-height: 2.75rem; padding-inline: var(--space-4); font-size: var(--fs-s); }
     @media (max-width: 860px) { .nav { display: none; } }
@@ -204,9 +208,7 @@
 
     .group, .coach, .price { transition: transform 0.25s, box-shadow 0.25s; }
     .group:hover, .coach:hover, .price:hover { transform: translateY(-4px); box-shadow: 0 1px 0 var(--c-line), 0 30px 50px -30px rgba(22, 19, 15, 0.55); }
-    .header { transition: box-shadow 0.3s; }
     .header.is-scrolled { box-shadow: 0 10px 30px -12px rgba(0,0,0,0.5); }
-    .nav a { position: relative; }
     .nav a::after { content: ""; position: absolute; left: 0; right: 0; bottom: -0.4rem; height: 2px; background: var(--c-red); transform: scaleX(0); transition: transform 0.25s; }
     .nav a:hover::after, .nav a.is-active::after { transform: scaleX(1); }
     .nav a.is-active { color: var(--c-night-ink); }
@@ -288,8 +290,7 @@
     .lightbox::backdrop { background: rgba(12, 10, 8, 0.6); }
     .lightbox[open] { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
     .lightbox__bar { display: flex; justify-content: space-between; align-items: center; padding: var(--space-4) var(--gutter); font-size: var(--fs-s); color: var(--c-night-muted); }
-    .lightbox__stage { position: relative; display: grid; place-items: center; padding: 0 clamp(0.5rem, 6vw, 5rem); touch-action: pan-y; }
-    .lightbox__stage { min-height: 0; }
+    .lightbox__stage { position: relative; display: grid; place-items: center; min-height: 0; padding: 0 clamp(0.5rem, 6vw, 5rem); touch-action: pan-y; }
     .lightbox__stage img { max-width: 100%; max-height: calc(100dvh - 9.5rem); object-fit: contain; border-radius: var(--radius-s); user-select: none; -webkit-user-drag: none; }
     .lightbox__caption { padding: var(--space-4) var(--gutter) var(--space-6); text-align: center; color: var(--c-night-muted); }
     .icon-btn {
@@ -378,8 +379,8 @@
     /* ---------- messengers ---------- */
     .msgr { display: flex; flex-wrap: wrap; gap: var(--space-2); }
     .msgr__btn {
-      display: inline-flex; align-items: center; gap: var(--space-2); min-height: 3rem; padding: 0 var(--space-6) 0 var(--space-4);
-      border-radius: 999px; color: #fff; font-weight: 700; text-decoration: none; transition: transform 0.2s, filter 0.2s;
+      position: relative; display: inline-flex; align-items: center; gap: var(--space-2); min-height: 3rem; padding: 0 var(--space-6) 0 var(--space-4);
+      border-radius: 999px; color: #fff; font-weight: 700; text-decoration: none; transition: transform 0.15s, filter 0.2s;
     }
     .msgr__btn:hover { transform: translateY(-2px); filter: brightness(1.08); }
     .msgr__btn svg { width: 1.35rem; height: 1.35rem; flex: none; }
@@ -388,7 +389,6 @@
     .msgr__btn--vk svg { width: 1.6rem; height: 1.6rem; }
 
     .header__actions { display: flex; align-items: center; gap: var(--space-2); }
-    .logo__mark { flex: none; }
     @media (max-width: 480px) { .hide-sm { display: none; } }
     @media (max-width: 350px) { .logo__name { display: none; } }
     .msgr__btn--icon { position: relative; flex: none; width: 2.75rem; min-height: 2.75rem; padding: 0; justify-content: center; }
@@ -401,13 +401,11 @@
     }
 
     /* press feedback for every messenger button: sinks in, then a ring spreads out */
-    .msgr__btn { transition: transform 0.15s, filter 0.2s; }
     .msgr__btn:active { transform: scale(0.9); }
     .msgr__btn::after {
       content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
       box-shadow: 0 0 0 0 currentColor; opacity: 0;
     }
-    .msgr__btn { position: relative; }
     .msgr__btn--tg::after { color: #2481cc; }
     .msgr__btn--vk::after { color: #0b5ed7; }
     .msgr__btn.is-pressed::after { animation: ring 0.6s ease-out; }
@@ -654,7 +652,7 @@
       </div>
     </section>
 
-    <section class="section" id="groups" style="padding-top: 0">
+    <section class="section section--flush" id="groups">
       <div class="container">
         <div class="section__head" data-reveal>
           <p class="eyebrow">Группы</p>
@@ -665,7 +663,7 @@
       </div>
     </section>
 
-    <section class="section" id="gym" style="padding-top: 0">
+    <section class="section section--flush" id="gym">
       <div class="container gym">
         <div class="clip" data-reveal>
           <video id="clip" src="media/training.mp4" poster="media/training-poster.webp" muted loop playsinline preload="metadata" aria-label="Фрагмент тренировки: отработка техники"></video>
@@ -676,7 +674,7 @@
           <p class="clip__caption"><strong>Техника — каждый день</strong><span>Отработка ударов и блоков в начале тренировки</span></p>
         </div>
         <div class="gym__side">
-          <div class="section__head" data-reveal style="margin-bottom: 0">
+          <div class="section__head section__head--flush" data-reveal>
             <p class="eyebrow">Зал</p>
             <h2>Как проходят занятия</h2>
             <p class="section__lead">Светлый зал с покрытием для тренировок босиком. Родители могут посмотреть первое занятие ребёнка прямо из зала.</p>
@@ -731,7 +729,7 @@
       </div>
     </section>
 
-    <section class="section" style="padding-top: 0">
+    <section class="section section--flush">
       <div class="container">
         <div class="section__head" data-reveal>
           <p class="eyebrow">Тренеры</p>
@@ -758,7 +756,7 @@
       </div>
     </section>
 
-    <section class="section" id="prices" style="padding-top: 0">
+    <section class="section section--flush" id="prices">
       <div class="container">
         <div class="section__head" data-reveal>
           <p class="eyebrow">Цены</p>
@@ -785,7 +783,7 @@
       </div>
     </section>
 
-    <section class="section" id="faq" style="padding-top: 0">
+    <section class="section section--flush" id="faq">
       <div class="container">
         <div class="section__head" data-reveal>
           <p class="eyebrow">Вопросы</p>
@@ -819,7 +817,7 @@
     <section class="section trial-section" id="trial">
       <div class="container trial">
         <div class="trial__info">
-          <div class="section__head" style="margin-bottom: 0" data-reveal>
+          <div class="section__head section__head--flush" data-reveal>
             <p class="eyebrow">Пробное занятие</p>
             <h2>Приходите знакомиться</h2>
             <p class="section__lead">Выберите группу и удобную тренировку. Мы перезвоним, чтобы подтвердить запись.</p>
@@ -893,7 +891,7 @@
             <h3>Заявка принята</h3>
             <p class="done__summary" id="done-summary"></p>
             <p class="done__text">Тренер перезвонит в течение дня. Если планы поменяются — просто скажите ему по телефону.</p>
-            <button class="btn btn--ghost" type="button" id="again" style="color: var(--c-ink)">Записать ещё кого-то</button>
+            <button class="btn btn--ghost btn--ink" type="button" id="again">Записать ещё кого-то</button>
           </div>
         </div>
       </div>
